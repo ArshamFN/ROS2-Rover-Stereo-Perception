@@ -1,0 +1,18 @@
+# colcon workspace output (root-anchored so images/build/ is not ignored)
+/build/
+/install/
+/log/
+
+# Third-party packages, pulled with: vcs import src < rover.repos
+/src/rf2o_laser_odometry/
+/src/rplidar_ros/
+/src/m-explore-ros2/
+
+# Python
+__pycache__/
+*.pyc
+
+# Local backups and editor files
+*.bak
+*.swp
+.vscode/
