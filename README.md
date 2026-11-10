@@ -1,0 +1,161 @@
+# ROS2 Rover Stereo Perception - Jetson + Stereo Depth
+
+The second phase of a 4WD autonomous rover built on the Waveshare UGV02 with an NVIDIA
+Jetson Orin Nano Super. A calibrated IMX219 stereo camera adds depth perception to a
+rover that already maps and explores a house on its own with ROS2 Humble, slam_toolbox,
+Nav2, and a custom frontier explorer.
+
+![Project Status](https://img.shields.io/badge/status-in%20progress-yellow)
+![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)
+![Platform](https://img.shields.io/badge/platform-Jetson%20Orin%20Nano-green)
+
+## Project Overview
+
+**Goal:** One press of EXPLORE on the handheld pendant, and the rover maps the house,
+avoids a shoe below the lidar's scan plane, crosses the rug without getting stuck, stops
+for a person in its path, and saves a colored 3D layer on top of the lidar map.
+
+**Why This Project:**
+- The lidar scans a single plane 180 mm above the floor, so anything lower is invisible
+  to it
+- Learn stereo calibration and metric depth on real hardware
+- Feed camera depth into the Nav2 costmap through standard ROS2 interfaces
+- Add person detection and a colored 3D map on an embedded GPU platform
+- Document real engineering problem-solving
+
+### Built on Project #1
+
+This project continues
+[WaveShare-Jetson-ROS2-Rover](https://github.com/ArshamFN/WaveShare-Jetson-ROS2-Rover),
+which ended with the rover mapping the house on its own after one press of EXPLORE. One
+of the main goals of Project #2 is to work on top of Project #1 without major changes to
+it:
+
+- Project #1's code was copied into this repository once, unchanged, in the first commit,
+  from Project #1's final commit (`a44e896`).
+- Project #1's nodes stay as they were. The one exception is the pendant control node,
+  because it names the systemd services it starts.
+- Configuration, launch files, the URDF, and the systemd service files may change.
+- Project #1's repository is never modified.
+- On the rover, the two projects live in separate workspaces and are never sourced
+  together.
+
+## Hardware Platform
+
+| Component | Specification |
+|-----------|---------------|
+| **Platform** | Waveshare UGV02, 4WD skid-steer chassis |
+| **Compute** | NVIDIA Jetson Orin Nano Super Developer Kit (8GB), 25W mode |
+| **LiDAR** | Slamtec RPLidar C1, 10Hz, scan plane 180 mm above the floor |
+| **Stereo camera** | Waveshare IMX219-83: two 8MP IMX219 sensors, 60 mm baseline (60.18 mm calibrated), 2.6 mm lenses, on the Jetson's two CSI ports |
+| **Camera IMU** | ICM20948 on the camera board, on the Jetson's I2C bus 7 |
+| **Camera mount** | 3D-printed case shared with the LiDAR: lens centre 23 mm below the scan plane and 156 mm above the floor |
+| **Motor control** | Waveshare Multi-Functional Driver (MFD) board over USB serial |
+| **Power** | 3× 18650 cells in series via the Waveshare UPS Module 3S |
+
+The two IMX219 sensors are not hardware-synchronised: each free-runs at 30 fps, so a left
+and a right frame can be up to about 33 ms apart.
+
+## Software Stack
+
+- **Operating System:** Ubuntu 22.04 LTS (JetPack 6.2.1)
+- **ROS Distribution:** ROS2 Humble Hawksbill
+- **From Project #1:** slam_toolbox, rf2o_laser_odometry, Nav2 with Regulated Pure
+  Pursuit, `rover_explorer`, and `foxglove_bridge` for the handheld pendant
+- **Camera capture:** NVIDIA Argus through GStreamer (`nvarguscamerasrc`), 1640×1232 at
+  30 fps scaled to 640×480
+- **Stereo depth:** OpenCV 4.5.4 semi-global block matching (SGBM) on the CPU
+- **Development Languages:** Python 3.10, C++17
+
+## Current Status
+
+**Last Updated:** November 10, 2026
+
+The stereo camera is mounted, calibrated, and measuring distance correctly to 2 m. After
+rectification, the left and right images line up to 0.34 px on average, and the
+calibrated baseline is 60.18 mm against 60 mm measured with calipers. Against a tape
+measure, depth reads within 1.8% from 0.5 to 2 m.
+
+The floor was measured once instead of being estimated every frame: the camera sits
+156 mm above the floor and points about 1.1° up, and with that plane the floor reads flat
+within 3.5 mm from 0.35 to 1.5 m. Everything the camera sees is sorted by height above
+the floor, and obstacles from 3 to 18 cm tall, below the LiDAR's scan plane, are detected
+in a standalone viewer at 9 fps on the Jetson. An 87 mm box read 90 to 91 mm tall.
+
+![The obstacle viewer: points colored by height above the floor on the left, depth on the right](images/testing/session-001/session-001-obstacle-viewer.png)
+
+*Red: 3 to 18 cm above the floor, below the LiDAR's scan plane. Yellow: taller, seen by the
+LiDAR too. Green: floor. Blue: below the floor, dropped.*
+
+The repository holds Project #1's code, imported unchanged in its first commit.
+
+### Completed Milestones
+
+**Hardware:**
+- ✅ IMX219-83 stereo camera mounted level in a 3D-printed case shared with the RPLidar C1
+- ✅ Camera IMU wired to the Jetson and read: the mount is level to 0.2° at rest
+
+**Software:**
+- ✅ Stereo calibration: 0.47 px reprojection error, rows aligned to 0.34 px, baseline
+  60.18 mm
+- ✅ Depth checked against a tape measure: within 1.8% from 0.5 to 2 m
+- ✅ Floor plane measured once with a checkerboard on a box top: the floor reads flat within
+  3.5 mm from 0.35 to 1.5 m
+- ✅ Floor matching improved by pre-shifting the right image by the floor's expected
+  disparity: correct floor readings doubled on the test scene
+- ✅ Obstacles from 3 to 18 cm tall detected in a standalone viewer at 9 fps on the Jetson
+  (25W, half resolution)
+- ✅ Project #1's code imported unchanged as this repository's first commit
+
+### Repository Layout
+
+```
+.gitignore  LICENSE  README.md  rover.repos
+docs/testing/              session logs
+images/testing/            screenshots and figures for the session logs
+scripts/                   motor calibration and test scripts from Project #1
+tools/systemd/             systemd user services for the pendant, the stack, and exploration
+tools/network/             network watchdog: home Wi-Fi or the rover's own network
+src/rover_driver/          /cmd_vel to MFD bridge
+src/robot_description/     URDF, launch files, and parameters
+src/pendant_bridge/        pendant control node
+src/rover_explore/         frontier explorer and map autosave node
+src/rf2o_laser_odometry/   not tracked; pulled via rover.repos
+src/rplidar_ros/           not tracked; pulled via rover.repos
+src/m-explore-ros2/        not tracked; pulled via rover.repos
+```
+
+Everything under `src/`, `scripts/`, and `tools/` is Project #1's code as imported. Its
+documentation, maps, and CAD files stay in the Project #1 repository.
+
+## Documentation
+
+- [Test Logs & Build Journal](docs/testing/0000-test-logs.md): session-by-session build
+  history of Project #2
+- [Project #1 Test Logs & Build Journal](https://github.com/ArshamFN/WaveShare-Jetson-ROS2-Rover/blob/main/docs/testing/0000-test-logs.md):
+  sessions 000 to 017, from first setup to autonomous mapping
+
+## Author
+
+**Arsham Faghihnasiri**
+
+Building autonomous systems and learning production ROS2 development.
+
+- 📍 Greater Toronto Area, Ontario, Canada
+- 💼 [LinkedIn](https://www.linkedin.com/in/arsham-faghihnasiri)
+- 📧 arshamfaghihnasiri@gmail.com
+- 🎓 Software Engineering
+
+## Acknowledgments
+
+- Waveshare for the UGV02 platform, the MFD board, and the IMX219-83 stereo camera
+- NVIDIA for Jetson developer tools and documentation
+- Slamtec for the RPLidar SDK and ROS2 driver
+- The OpenCV project
+- MAPIRlab for rf2o_laser_odometry, and Adlink-ROS for its ROS2 port
+- Jiří Hörner for explore_lite, and robo-friends for its ROS2 port, m-explore-ros2
+- The ROS2 and Nav2 open source communities
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
