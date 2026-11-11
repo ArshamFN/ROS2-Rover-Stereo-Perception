@@ -33,8 +33,9 @@ it:
 
 - Project #1's code was copied into this repository once, unchanged, in the first commit,
   from Project #1's final commit (`a44e896`).
-- Project #1's nodes stay as they were. The one exception is the pendant control node,
-  because it names the systemd services it starts.
+- Project #1's nodes stay as they were, with two exceptions: the pendant control node,
+  because it names the systemd services it starts, and the exploration autosave node's
+  default folders for maps and run logs.
 - Configuration, launch files, the URDF, and the systemd service files may change.
 - Project #1's repository is never modified.
 - On the rover, the two projects live in separate workspaces and are never sourced
@@ -113,8 +114,10 @@ The repository holds Project #1's code, imported unchanged in its first commit.
 .gitignore  LICENSE  README.md  rover.repos
 docs/testing/              session logs
 images/testing/            screenshots and figures for the session logs
+maps/                      maps saved from the pendant and by exploration
 scripts/                   motor calibration and test scripts from Project #1
-tools/systemd/             systemd user services for the pendant, the stack, and exploration
+tools/systemd/             systemd user services for the pendant, the stack, and exploration,
+                           and scripts that switch the rover between Project #1 and Project #2
 tools/network/             network watchdog: home Wi-Fi or the rover's own network
 src/rover_driver/          /cmd_vel to MFD bridge
 src/robot_description/     URDF, launch files, and parameters
@@ -125,8 +128,10 @@ src/rplidar_ros/           not tracked; pulled via rover.repos
 src/m-explore-ros2/        not tracked; pulled via rover.repos
 ```
 
-Everything under `src/`, `scripts/`, and `tools/` is Project #1's code as imported. Its
-documentation, maps, and CAD files stay in the Project #1 repository.
+Everything under `src/`, `scripts/`, and `tools/` started as Project #1's code. The copy
+now points at this workspace, with its own systemd service names and its own folders for
+maps and run logs. Project #1's documentation, maps, and CAD files stay in its own
+repository.
 
 ## Documentation
 

@@ -1,11 +1,11 @@
 """Pendant control node.
 
-Starts and stops the rover-bringup, rover-nav2 and rover-explore systemd user
-services, publishes their state, saves SLAM maps with nav2_map_server, and
-runs a two-press shutdown that stops the stack and then powers off the
-computer. Exploration starts with one press of its toggle; stopping it takes
-a second press within 5 s, because a stop mid-run cancels the run and its
-final map save.
+Starts and stops the stereo-rover-bringup, stereo-rover-nav2 and
+stereo-rover-explore systemd user services, publishes their state, saves SLAM
+maps with nav2_map_server, and runs a two-press shutdown that stops the stack
+and then powers off the computer. Exploration starts with one press of its
+toggle; stopping it takes a second press within 5 s, because a stop mid-run
+cancels the run and its final map save.
 """
 
 import os
@@ -23,9 +23,9 @@ from slam_toolbox.srv import SaveMap
 from std_msgs.msg import Bool, String
 from std_srvs.srv import SetBool, Trigger
 
-BRINGUP_UNIT = 'rover-bringup.service'
-NAV2_UNIT = 'rover-nav2.service'
-EXPLORE_UNIT = 'rover-explore.service'
+BRINGUP_UNIT = 'stereo-rover-bringup.service'
+NAV2_UNIT = 'stereo-rover-nav2.service'
+EXPLORE_UNIT = 'stereo-rover-explore.service'
 
 # pgrep -f pattern for exploration nodes started outside systemd.
 EXPLORE_PROCESS_RE = 'explore_autosave|rover_explorer|explore_lite'
@@ -91,7 +91,7 @@ class PendantControl(Node):
 
     def __init__(self):
         super().__init__('pendant_control')
-        self.declare_parameter('maps_dir', '~/ros2_ws/maps')
+        self.declare_parameter('maps_dir', '~/stereo_ws/maps')
         self.maps_dir = os.path.expanduser(
             self.get_parameter('maps_dir').get_parameter_value().string_value)
         self.declare_parameter('allow_poweroff', False)

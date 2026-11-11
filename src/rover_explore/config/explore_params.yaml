@@ -69,8 +69,8 @@ explore_node:
 explore_autosave:
   ros__parameters:
     use_sim_time: false
-    runs_dir: "~/rover_runs"
-    maps_dir: "~/ros2_ws/maps"
+    runs_dir: "~/stereo_rover_runs"
+    maps_dir: "~/stereo_ws/maps"
     checkpoint_period_s: 300.0
     final_retries: 3
     final_retry_delay_s: 10.0

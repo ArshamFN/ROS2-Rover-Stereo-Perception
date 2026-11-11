@@ -37,8 +37,8 @@ command as zero, so a crashed controller cannot leave the rover driving on its l
 instruction. The ramp still applies, so the rover decelerates rather than stopping dead.
 The check, like every wheel command, runs only when the node processes a T:1001 feedback
 packet from the board. If that feedback stops, or the node itself stops, no zero command
-is sent and the board keeps executing its last command; the `rover-bringup` service
-sends a zero command after the whole stack stops.
+is sent and the board keeps executing its last command; the `stereo-rover-bringup`
+service sends a zero command after the whole stack stops.
 
 **Battery monitoring.** The board reports pack voltage in every T:1001 feedback packet
 (`v`, volts × 100). The node publishes it on `/battery_voltage`, logs a warning at
@@ -147,7 +147,7 @@ sudo apt install python3-serial
 The package is part of the repository's colcon workspace. From the workspace root:
 
 ```bash
-cd ~/ros2_ws
+cd ~/stereo_ws
 colcon build --symlink-install --packages-select rover_driver
 source install/setup.bash
 ```
@@ -159,7 +159,7 @@ being sourced:
 echo $AMENT_PREFIX_PATH
 ```
 
-Every entry should point inside `~/ros2_ws/install`. A stale `~/install/` directory
+Every entry should point inside `~/stereo_ws/install`. A stale `~/install/` directory
 elsewhere in your home folder will silently shadow the workspace and run old code after
 every rebuild.
 

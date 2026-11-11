@@ -162,9 +162,9 @@ class ExploreAutosave(Node):
         self.t0 = time.monotonic()
 
         self.runs_dir = os.path.expanduser(
-            self.declare_parameter('runs_dir', '~/rover_runs').value)
+            self.declare_parameter('runs_dir', '~/stereo_rover_runs').value)
         self.maps_dir = os.path.expanduser(
-            self.declare_parameter('maps_dir', '~/ros2_ws/maps').value)
+            self.declare_parameter('maps_dir', '~/stereo_ws/maps').value)
         self.checkpoint_period = float(
             self.declare_parameter('checkpoint_period_s', 300.0).value)
         self.final_retries = int(self.declare_parameter('final_retries', 3).value)
