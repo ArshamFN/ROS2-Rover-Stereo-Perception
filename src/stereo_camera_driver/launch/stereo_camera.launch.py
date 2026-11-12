@@ -26,6 +26,7 @@ def _driver(context):
                 'encoding': LaunchConfiguration('encoding'),
                 'sensor_mode': LaunchConfiguration('sensor_mode'),
                 'source': LaunchConfiguration('source'),
+                'fps': LaunchConfiguration('fps'),
             }],
         ),
     ]
@@ -40,6 +41,9 @@ def generate_launch_description():
         DeclareLaunchArgument('sensor_mode', default_value='3', description='Argus sensor mode'),
         DeclareLaunchArgument(
             'source', default_value='argus', description='argus, or test for a test pattern'),
+        DeclareLaunchArgument(
+            'fps', default_value='30',
+            description='frames per second per camera (sensor mode 3 allows up to 30)'),
         DeclareLaunchArgument('namespace', default_value='stereo'),
         OpaqueFunction(function=_driver),
     ])

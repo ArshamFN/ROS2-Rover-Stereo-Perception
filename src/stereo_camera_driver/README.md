@@ -54,5 +54,5 @@ gap stays roughly fixed while they run and changes every time they start.
 ros2 launch stereo_camera_driver stereo_camera.launch.py calibration_file:=<path>
 ```
 
-Arguments: `calibration_file`, `encoding`, `sensor_mode`, `source`, `namespace` (default
-`stereo`). The launch file logs the calibration file's sha256.
+Arguments: `calibration_file`, `encoding`, `sensor_mode`, `fps`, `source`, `namespace`
+(default `stereo`). The launch file logs the calibration file's sha256.
