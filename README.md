@@ -189,6 +189,7 @@ scripts/                   motor calibration and test scripts from Project #1
 tools/systemd/             systemd user services for the pendant, the stack, and exploration,
                            and scripts that switch the rover between Project #1 and Project #2
 tools/network/             network watchdog: home Wi-Fi or the rover's own network
+tools/stereo_calib/        stereo camera test, calibration, and depth viewer scripts
 src/rover_driver/          /cmd_vel to MFD bridge
 src/robot_description/     URDF, launch files, and parameters
 src/pendant_bridge/        pendant control node
@@ -198,10 +199,11 @@ src/rplidar_ros/           not tracked; pulled via rover.repos
 src/m-explore-ros2/        not tracked; pulled via rover.repos
 ```
 
-Everything under `src/`, `scripts/`, and `tools/` started as Project #1's code. The copy
-now points at this workspace, with its own systemd service names and its own folders for
-maps and run logs. Project #1's documentation, maps, and CAD files stay in its own
-repository.
+Everything under `src/`, `scripts/`, and `tools/`, except `tools/stereo_calib/`, started as
+Project #1's code. The copy now points at this workspace, with its own systemd service
+names and its own folders for maps and run logs. Project #1's documentation, maps, and CAD
+files stay in its own repository. `tools/stereo_calib/` holds this project's own camera
+scripts from Session 001.
 
 ## Documentation
 
