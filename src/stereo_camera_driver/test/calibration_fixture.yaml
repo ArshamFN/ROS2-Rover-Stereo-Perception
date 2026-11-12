@@ -1,0 +1,53 @@
+%YAML:1.0
+---
+date: "2026-01-01 00:00:00"
+left_sensor_id: 0
+right_sensor_id: 1
+flip: 0
+cap_width: 1640
+cap_height: 1232
+width: 640
+height: 480
+cols: 9
+rows: 6
+square_mm: 25.
+K1: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 420., 0., 320., 0., 421., 240., 0., 0., 1. ]
+D1: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data: [ -3.0e-02, 1.8e-02, -4.0e-03, 5.0e-03, 0. ]
+K2: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 422., 0., 322., 0., 423., 270., 0., 0., 1. ]
+D2: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data: [ -3.5e-02, 1.7e-02, -4.0e-03, 4.0e-03, 0. ]
+R1: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 1., 0., 0., 0., 1., 0., 0., 0., 1. ]
+R2: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 1., 0., 0., 0., 1., 0., 0., 0., 1. ]
+P1: !!opencv-matrix
+   rows: 3
+   cols: 4
+   dt: d
+   data: [ 500., 0., 330., 0., 0., 500., 245., 0., 0., 0., 1., 0. ]
+P2: !!opencv-matrix
+   rows: 3
+   cols: 4
+   dt: d
+   data: [ 500., 0., 330., -3.0e+04, 0., 500., 245., 0., 0., 0., 1., 0. ]
