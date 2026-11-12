@@ -70,7 +70,7 @@ and a right frame can be up to about 33 ms apart.
 
 ## Current Status
 
-**Last Updated:** November 10, 2026
+**Last Updated:** November 12, 2026
 
 The stereo camera is mounted, calibrated, and measuring distance correctly to 2 m. After
 rectification, the left and right images line up to 0.34 px on average, and the
@@ -88,7 +88,10 @@ in a standalone viewer at 9 fps on the Jetson. An 87 mm box read 90 to 91 mm tal
 *Red: 3 to 18 cm above the floor, below the LiDAR's scan plane. Yellow: taller, seen by the
 LiDAR too. Green: floor. Blue: below the floor, dropped.*
 
-The repository holds Project #1's code, imported unchanged in its first commit.
+The repository holds Project #1's code, pointed at this workspace with its own service
+names and folders, and the rover runs Project #1's whole stack from it: in a test run from
+the pendant, bringup, Nav2 and exploration of one room worked as before, and the map and
+run log landed in this project's own folders.
 
 ### Completed Milestones
 
@@ -107,6 +110,73 @@ The repository holds Project #1's code, imported unchanged in its first commit.
 - ✅ Obstacles from 3 to 18 cm tall detected in a standalone viewer at 9 fps on the Jetson
   (25W, half resolution)
 - ✅ Project #1's code imported unchanged as this repository's first commit
+- ✅ Project #1's stack runs from this repository with its own services and its own map
+  and run-log folders; one script switches the rover between the two projects
+
+## Getting Started
+
+### Requirements
+
+- A rover set up as in
+  [Project #1's Getting Started](https://github.com/ArshamFN/WaveShare-Jetson-ROS2-Rover#getting-started):
+  the ROS packages, the `/dev/rover` udev symlink, lingering for user services, the
+  pendant's power-off permission, the network watchdog, and the Foxglove layout on the
+  pendant. Project #2 uses all of them as they are.
+
+### Build
+
+The repository is a complete colcon workspace and lives at `~/stereo_ws`, next to
+Project #1's `~/ros2_ws`. The two hold packages with the same names, so they are never
+sourced together. Build in a shell where only ROS2 Humble is sourced: colcon writes every
+workspace sourced at build time into the setup files it generates, so a build started
+from a shell with `~/ros2_ws` sourced would load Project #1's packages underneath this one.
+
+```bash
+git clone https://github.com/ArshamFN/ROS2-Rover-Stereo-Perception.git ~/stereo_ws
+cd ~/stereo_ws
+vcs import src < rover.repos
+env -i HOME="$HOME" USER="$USER" PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin" LANG=C.UTF-8 \
+  bash --norc --noprofile -c 'source /opt/ros/humble/setup.bash && colcon build --symlink-install'
+```
+
+`grep -rl ros2_ws install/` should then print nothing.
+
+### Services
+
+Only one project's services run at a time: both use the MFD board's serial port, the
+LiDAR, the cameras, the pendant's topics, and Foxglove's port 8765. Project #2's services
+have their own names, so both sets stay installed side by side.
+
+| Service | Starts | Runs |
+|---|---|---|
+| `stereo-rover-bridge` | at boot | `foxglove_bridge` |
+| `stereo-rover-control` | at boot | the `pendant_bridge` control node |
+| `stereo-rover-bringup` | on demand | `bringup.launch.py` without RViz, then `rover_zero_motors.py` after every stop or crash |
+| `stereo-rover-nav2` | on demand | Nav2, stopping whenever bringup stops |
+| `stereo-rover-explore` | on demand | `explore.launch.py`, only while bringup and Nav2 run |
+
+Install them, then move the rover from Project #1's services to these:
+
+```bash
+~/stereo_ws/tools/systemd/install.sh
+~/stereo_ws/tools/systemd/switch_to_project2.sh
+```
+
+`install.sh` installs the five services and enables nothing. `switch_to_project2.sh`
+stops and disables `rover-bridge` and `rover-control`, then enables and starts
+`stereo-rover-bridge` and `stereo-rover-control`; `switch_to_project1.sh` does the
+reverse. Both run without sudo and refuse while either project's bringup, Nav2, or
+exploration is running, so stop the stack from the pendant first. The choice holds across
+reboots. Reconnect the pendant after a switch.
+
+### Run
+
+The pendant works as in
+[Project #1](https://github.com/ArshamFN/WaveShare-Jetson-ROS2-Rover#handheld-pendant):
+BRINGUP, NAV2, and EXPLORE start the stack and exploration. A run's final map goes to
+`~/stereo_ws/maps/explore_<YYYYMMDD-HHMMSS>_final.pgm` and `.yaml`, and its checkpoints,
+pose graphs, `events.csv`, and `battery.csv` to
+`~/stereo_rover_runs/explore_<YYYYMMDD-HHMMSS>/`.
 
 ### Repository Layout
 
@@ -114,7 +184,7 @@ The repository holds Project #1's code, imported unchanged in its first commit.
 .gitignore  LICENSE  README.md  rover.repos
 docs/testing/              session logs
 images/testing/            screenshots and figures for the session logs
-maps/                      maps saved from the pendant and by exploration
+maps/                      maps saved from the pendant and by exploration (not tracked)
 scripts/                   motor calibration and test scripts from Project #1
 tools/systemd/             systemd user services for the pendant, the stack, and exploration,
                            and scripts that switch the rover between Project #1 and Project #2

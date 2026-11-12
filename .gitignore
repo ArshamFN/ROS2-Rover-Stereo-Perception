@@ -12,6 +12,10 @@
 __pycache__/
 *.pyc
 
+# Maps saved on the rover; the logs show the ones that matter as images
+/maps/*
+!/maps/.gitkeep
+
 # Local backups and editor files
 *.bak
 *.swp

@@ -224,7 +224,7 @@ both cameras. The left and right cameras agreed within 0.1°, but the two captur
 differed by about 0.65°: the box top itself is off level by about 0.3°, and turning it
 around cancels that in the average. The result is a pitch of -0.97° and a roll of -0.70°
 in the rectified camera frame, the frame the depth comes out in. In the raw camera frame
-that is about 1.1° of pitch, pointing up, and 0.14° of roll.
+that is about 1.1° of pitch, pointing up, and 0.18° of roll.
 
 The pose solution put the camera 150.4 to 151.9 mm above the floor, 5 mm under the tape.
 Checked against the stereo floor, the tape height fit better: with 156 mm the floor stayed
