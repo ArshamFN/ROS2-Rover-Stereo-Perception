@@ -59,4 +59,63 @@
     <origin xyz="0.0 0.0 0.1685" rpy="0 0 3.14159265"/>
   </joint>
 
+  <!--
+    Project #2, Session 002: the stereo camera (Waveshare IMX219-83).
+
+    stereo_left_link is the raw left camera (the lens the calibration calls
+    left; sensor-id 1), in body axes (x forward, y left, z up).
+      position  0.067 0.030 0.1445 from base_link: optical centre about
+                67 mm ahead of the lidar's spin axis (lens front 70 mm),
+                30 mm left of the centreline (half the 60 mm lens spacing,
+                module assumed centred), 156 mm above the floor
+                (156 - 11.5).
+      roll, pitch  from the floor plane measured in Session 001 (floor
+                normal in the raw left camera frame 0.003176, 0.999815,
+                -0.018946): pitch 1.09 deg up, roll 0.18 deg.
+      yaw       -0.3 deg (0.3 deg to the right), measured against the
+                lidar in Session 002 with tools/stereo_calib/
+                lidar_camera_yaw.py: a target 0.365 m wide at 0.5 and
+                1.0 m gave -0.62 and +0.06 deg. Roll and pitch do not
+                depend on the yaw.
+
+    stereo_left_optical_frame is the rectified left camera frame, the frame
+    of the rectified images, the disparity and the point cloud. The joint
+    from the raw optical frame is the calibration's rectification R1
+    transposed (config/stereo_calib.yaml; R1 maps raw coordinates into
+    rectified ones, so the rectified frame's orientation in the raw frame
+    is its transpose). Change it together with the calibration.
+
+    stereo_right_optical_frame is the rectified right camera frame:
+    0.060176 m to the right along the rectified x axis (the baseline,
+    -P2[0][3] / P2[0][0] in the calibration).
+  -->
+  <link name="stereo_left_link"/>
+  <link name="stereo_left_raw_optical_frame"/>
+  <link name="stereo_left_optical_frame"/>
+  <link name="stereo_right_optical_frame"/>
+
+  <joint name="base_to_stereo_left" type="fixed">
+    <parent link="base_link"/>
+    <child link="stereo_left_link"/>
+    <origin xyz="0.067 0.030 0.1445" rpy="0.003177 -0.018947 -0.005236"/>
+  </joint>
+
+  <joint name="stereo_left_to_raw_optical" type="fixed">
+    <parent link="stereo_left_link"/>
+    <child link="stereo_left_raw_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079633 0 -1.57079633"/>
+  </joint>
+
+  <joint name="stereo_left_rectification" type="fixed">
+    <parent link="stereo_left_raw_optical_frame"/>
+    <child link="stereo_left_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-0.001859 -0.014906 -0.015116"/>
+  </joint>
+
+  <joint name="stereo_left_to_right" type="fixed">
+    <parent link="stereo_left_optical_frame"/>
+    <child link="stereo_right_optical_frame"/>
+    <origin xyz="0.060176 0 0" rpy="0 0 0"/>
+  </joint>
+
 </robot>

@@ -1,8 +1,9 @@
 # Stereo camera tools
 
-Python scripts used in Session 001 to test, calibrate, and check the IMX219-83 stereo
-camera on the Jetson. They run on the Jetson itself, outside ROS2, and import each other,
-so they stay together in this folder.
+Python scripts to test, calibrate, and check the IMX219-83 stereo camera on the Jetson.
+The Session 001 scripts run on the Jetson itself, outside ROS2, and import each other,
+so they stay together in this folder. `lidar_camera_yaw.py` (Session 002) is a ROS2
+script.
 
 | Script | What it does |
 |---|---|
@@ -15,6 +16,7 @@ so they stay together in this folder.
 | `stereo_depth_view.py` | Calibrated depth, live or from a saved pair, with a measurement box and a checkerboard readout for checking against a tape measure. |
 | `stereo_obstacle_view.py` | Height above the floor for every stereo point, live or from a saved pair. Obstacles from 3 to 18 cm tall, below the LiDAR's scan plane, show in red. |
 | `imu_test.py` | Reads the ICM20948 on the camera board over I2C bus 7: identity, accelerometer, gyro, temperature, and magnetometer. |
+| `lidar_camera_yaw.py` | ROS2. Finds a flat target of known width in the LiDAR scan and in the stereo point cloud, and reports the camera yaw that makes the two agree. See the last section. |
 
 ## Requirements
 
@@ -22,6 +24,7 @@ so they stay together in this folder.
   open the CSI cameras; `stereo_test.py` checks for this.
 - numpy
 - `smbus2` for `imu_test.py`: `pip3 install smbus2`
+- ROS2 Humble with `rclpy` and `tf2_ros` for `lidar_camera_yaw.py`
 
 ## Data
 
@@ -42,3 +45,20 @@ python3 stereo_obstacle_view.py
 ```
 
 Measure the printed squares with calipers and pass that size to `stereo_calibrate.py`.
+
+## Camera yaw against the LiDAR
+
+`lidar_camera_yaw.py` checks the camera yaw in the URDF against the LiDAR. Put a flat,
+textured target of known width upright in front of the rover, 0.5 to 1 m away, with
+nothing beside it at the same distance. A laptop screen showing a random pattern works.
+With bringup and the stereo pipeline running and the rover standing still, in a shell
+with this workspace sourced:
+
+    python3 tools/stereo_calib/lidar_camera_yaw.py --width 0.365
+
+It reports where each sensor puts the target (forward distance, sideways offset, angle,
+width) and the camera yaw two ways: from the position of the target seen from the
+camera, and from the angle of its surface. Use the position yaw, and run it at two
+distances. A position yaw that changes with distance points to the mounting position of
+the camera in the URDF. A surface angle difference that grows with distance points to
+the stereo calibration. At 0.5 m the stereo pipeline needs `disparity_range:=128`.
