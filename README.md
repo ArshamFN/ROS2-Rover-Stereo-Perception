@@ -46,7 +46,7 @@ it:
 | Component | Specification |
 |-----------|---------------|
 | **Platform** | Waveshare UGV02, 4WD skid-steer chassis |
-| **Compute** | NVIDIA Jetson Orin Nano Super Developer Kit (8GB), 25W mode |
+| **Compute** | NVIDIA Jetson Orin Nano Super Developer Kit (8GB), MAXN SUPER mode |
 | **LiDAR** | Slamtec RPLidar C1, 10Hz, scan plane 180 mm above the floor |
 | **Stereo camera** | Waveshare IMX219-83: two 8MP IMX219 sensors, 60 mm baseline (60.18 mm calibrated), 2.6 mm lenses, on the Jetson's two CSI ports |
 | **Camera IMU** | ICM20948 on the camera board, on the Jetson's I2C bus 7 |
@@ -54,8 +54,10 @@ it:
 | **Motor control** | Waveshare Multi-Functional Driver (MFD) board over USB serial |
 | **Power** | 3× 18650 cells in series via the Waveshare UPS Module 3S |
 
-The two IMX219 sensors are not hardware-synchronised: each free-runs at 30 fps, so a left
-and a right frame can be up to about 33 ms apart.
+The two IMX219 sensors are not hardware-synchronised: each free-runs, so a left and a
+right frame are never taken at the same moment. Measured in Session 002, the nearest
+right frame to each left frame is about 11 ms away, earlier or later depending on the
+start.
 
 ## Software Stack
 
@@ -63,14 +65,25 @@ and a right frame can be up to about 33 ms apart.
 - **ROS Distribution:** ROS2 Humble Hawksbill
 - **From Project #1:** slam_toolbox, rf2o_laser_odometry, Nav2 with Regulated Pure
   Pursuit, `rover_explorer`, and `foxglove_bridge` for the handheld pendant
-- **Camera capture:** NVIDIA Argus through GStreamer (`nvarguscamerasrc`), 1640×1232 at
-  30 fps scaled to 640×480
-- **Stereo depth:** OpenCV 4.5.4 semi-global block matching (SGBM) on the CPU
+- **Camera driver:** `stereo_camera_driver` (C++17, no OpenCV): both sensors in one
+  NVIDIA Argus pipeline through GStreamer (`nvarguscamerasrc`), 1640×1232 scaled to
+  640×480, 15 fps in the depth pipeline
+- **Stereo depth:** `stereo_image_proc` block matching on the CPU, in one ROS2 process
+  with a thread pool; Session 001's standalone viewers use OpenCV 4.5.4 semi-global block
+  matching (SGBM)
 - **Development Languages:** Python 3.10, C++17
 
 ## Current Status
 
-**Last Updated:** November 12, 2026
+**Last Updated:** November 23, 2026
+
+The camera is a ROS2 node. A C++ driver publishes both images with their calibration, and
+`stereo_image_proc` turns them into a point cloud in the rover's own frames: 14.4 Hz with
+bringup and Nav2 running, 142 ms behind the camera, in MAXN SUPER mode. The camera's pose
+is in the URDF, with its yaw measured against the LiDAR: at 0.5 and 1 m, the camera and
+the LiDAR place a flat target, a laptop screen, within 2 cm of each other. A flat surface
+still reads tilted by about 3.7° per metre of distance, an error in the stereo
+calibration; fixing it is next.
 
 The stereo camera is mounted, calibrated, and measuring distance correctly to 2 m. After
 rectification, the left and right images line up to 0.34 px on average, and the
@@ -109,6 +122,12 @@ run log landed in this project's own folders.
   disparity: correct floor readings doubled on the test scene
 - ✅ Obstacles from 3 to 18 cm tall detected in a standalone viewer at 9 fps on the Jetson
   (25W, half resolution)
+- ✅ C++ camera driver: both sensors in one pipeline, calibration from the repository,
+  frame rates and the left/right gap logged
+- ✅ Depth pipeline in ROS2: point cloud at 14.4 Hz with bringup and Nav2 running (MAXN
+  SUPER, 15 fps cameras)
+- ✅ Camera pose in the URDF, its yaw measured against the LiDAR with
+  `tools/stereo_calib/lidar_camera_yaw.py`
 - ✅ Project #1's code imported unchanged as this repository's first commit
 - ✅ Project #1's stack runs from this repository with its own services and its own map
   and run-log folders; one script switches the rover between the two projects
@@ -178,6 +197,24 @@ BRINGUP, NAV2, and EXPLORE start the stack and exploration. A run's final map go
 pose graphs, `events.csv`, and `battery.csv` to
 `~/stereo_rover_runs/explore_<YYYYMMDD-HHMMSS>/`.
 
+### Stereo depth
+
+The depth pipeline is not part of bringup yet. With bringup running, start it from a
+shell where only ROS2 Humble and this workspace are sourced:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/stereo_ws/install/setup.bash
+ros2 launch robot_description stereo.launch.py
+```
+
+It publishes the point cloud on `/stereo/points2`, in the `stereo_left_optical_frame`
+frame, from both cameras at 15 fps. The default disparity range of 64 px sees nothing
+nearer than 0.45 m; `disparity_range:=128` reaches 0.23 m but loses the leftmost fifth of
+the image. Stop it with Ctrl+C. The pipeline's container crashes on the way out, a known
+ROS2 issue that does not affect the results; it will be fixed before the pipeline joins
+bringup.
+
 ### Repository Layout
 
 ```
@@ -189,7 +226,8 @@ scripts/                   motor calibration and test scripts from Project #1
 tools/systemd/             systemd user services for the pendant, the stack, and exploration,
                            and scripts that switch the rover between Project #1 and Project #2
 tools/network/             network watchdog: home Wi-Fi or the rover's own network
-tools/stereo_calib/        stereo camera test, calibration, and depth viewer scripts
+tools/stereo_calib/        stereo camera test, calibration, depth viewer, and LiDAR
+                           alignment scripts
 src/rover_driver/          /cmd_vel to MFD bridge
 src/robot_description/     URDF, launch files, parameters, and the stereo calibration
 src/pendant_bridge/        pendant control node
@@ -201,7 +239,7 @@ src/m-explore-ros2/        not tracked; pulled via rover.repos
 ```
 
 Everything under `src/`, `scripts/`, and `tools/` started as Project #1's code, except
-`tools/stereo_calib/` (this project's camera scripts from Session 001) and
+`tools/stereo_calib/` (this project's camera scripts) and
 `src/stereo_camera_driver/` (its camera driver). The copy now points at this workspace,
 with its own systemd service names and its own folders for maps and run logs. Project #1's
 documentation, maps, and CAD files stay in its own repository.

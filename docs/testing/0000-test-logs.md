@@ -13,6 +13,7 @@ repository.
 | Session | Date | Title | Status |
 |---------|------|-------|--------|
 | 001 | 2026-11-05 | Mounting and Calibrating the Stereo Camera, and Finding the Floor | ✅ Complete |
+| 002 | 2026-11-10 | The Stereo Camera Node, and Lining It Up With the Lidar | ✅ Complete |
 
 ---
 
@@ -39,5 +40,28 @@ builds them, not grouped in the image.
 ![The obstacle viewer: points colored by height above the floor, and depth](../../images/testing/session-001/session-001-obstacle-viewer.png)
 
 **→ [Full session log](2026-11-05-session-001-Mounting-and-Calibrating-the-Stereo-Camera-and-Finding-the-Floor.md)**
+
+---
+
+## Session 002 — 2026-11-10: The Stereo Camera Node, and Lining It Up With the Lidar
+**Goal:** Turn the calibrated camera into a ROS 2 node with its pose in the URDF, and
+line its point cloud up with the lidar.
+
+**Summary:** I wrote a C++ driver that runs both cameras in one GStreamer pipeline
+without OpenCV, because the Jetson carries two versions of it. The stock depth pipeline
+ran all its nodes on one thread; my own launch file with a thread pool, grey images and a
+packed cloud took it from 21 to 27 Hz with the rover idle. My first rate measurements
+were wrong because a best-effort subscriber loses large messages, which is also how Nav2
+will receive the cloud. With bringup and Nav2 running, halving the camera rate to 15 fps
+gave more depth, not less: 14.4 Hz with a 142 ms delay in MAXN SUPER. Hand measurements
+of the camera's yaw disagreed by 3.5°, and a wall could not separate the camera's yaw
+from a calibration error. A laptop screen of known width could: where its ends appear
+does not depend on stereo depth. It put the camera at -0.3° relative to the lidar and
+showed that the stereo calibration tilts flat surfaces by about 3.7° per metre, the next
+thing to fix.
+
+![The laptop test: the rover facing a laptop showing a random pattern 0.5 m ahead](../../images/testing/session-002/session-002-laptop-yaw-setup.jpg)
+
+**→ [Full session log](2026-11-10-session-002-The-Stereo-Camera-Node-and-Lining-It-Up-With-the-Lidar.md)**
 
 ---
